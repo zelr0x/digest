@@ -10,6 +10,9 @@ Calculates checksums for given files or a standard input stream.
 - Check mode supports a checksum file format with digests calculated with different algorithms
 
 
+No advanced autocomplete was harmed during the making of this program.
+
+
 ## Usage
 
 ### Normal mode
