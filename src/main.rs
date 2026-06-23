@@ -1,7 +1,7 @@
-use std::process::exit;
-use std::io::{self, Read, Write, BufRead, BufReader};
-use std::path::{Path, PathBuf};
 use std::fs::File;
+use std::io::{self, BufRead, BufReader, Read, Write};
+use std::path::{Path, PathBuf};
+use std::process::exit;
 
 use clap::{Parser, ValueEnum};
 use digest::{Digest, DynDigest};
@@ -160,7 +160,7 @@ struct Args {
     list: bool,
 
     /// read in binary mode (default unless reading tty stdin)
-    #[arg(short = 'b', long = "binary",  default_value_t = false)]
+    #[arg(short = 'b', long = "binary", default_value_t = false)]
     binary: bool,
 
     /// read in text mode (deafult if reading tty stdin)
@@ -210,10 +210,12 @@ struct Args {
 
 fn checkonly(optval: bool, optname: &str) {
     if !optval {
-        return
+        return;
     }
-    eprintln!("{}the {} option is meaningful only when verifying checksums",
-              ERR_PREFIX, optname);
+    eprintln!(
+        "{}the {} option is meaningful only when verifying checksums",
+        ERR_PREFIX, optname
+    );
     exit(1);
 }
 
@@ -230,7 +232,7 @@ fn fopen_or_exit(filename: &str) -> File {
 }
 
 fn guess_alg(digest_str: &str) -> Option<Alg> {
-    let a = match digest_str.len()/2 {
+    let a = match digest_str.len() / 2 {
         16 => DEFAULT_128_BIT_ALG,
         20 => DEFAULT_160_BIT_ALG,
         28 => DEFAULT_224_BIT_ALG,
@@ -284,11 +286,11 @@ fn print_hex(bytes: &[u8], buf: &mut [u8]) -> io::Result<()> {
     const HEX: &[u8; 16] = b"0123456789abcdef";
     let n = bytes.len();
     for (i, &b) in bytes.iter().enumerate() {
-        buf[2*i]     = HEX[(b >> 4) as usize];
-        buf[2*i+1] = HEX[(b & 0x0f) as usize];
+        buf[2 * i] = HEX[(b >> 4) as usize];
+        buf[2 * i + 1] = HEX[(b & 0x0f) as usize];
     }
     let mut out = io::stdout(); // TODO: could reuse
-    out.write_all(&buf[..2*n]).unwrap_or_else(|e| {
+    out.write_all(&buf[..2 * n]).unwrap_or_else(|e| {
         eprintln!("{}failed to output digest: {}", ERR_PREFIX, e);
         exit(3);
     });
@@ -344,7 +346,10 @@ fn main() {
     let text = args.text;
     // TODO: allow this and make the last specified win as in coreutils?
     if binary && text {
-        eprintln!("{}binary and text options are mutually exclusive", ERR_PREFIX);
+        eprintln!(
+            "{}binary and text options are mutually exclusive",
+            ERR_PREFIX
+        );
         exit(1);
     }
 
@@ -365,11 +370,7 @@ fn main() {
         (files, expected)
     };
 
-    let filename = if files.is_empty() {
-        "-"
-    } else {
-        &files[0]
-    };
+    let filename = if files.is_empty() { "-" } else { &files[0] };
     let mut filepath: Option<&Path> = None;
     let mut file: Box<dyn Read> = if filename == "-" {
         // text = !binary; // implied, uncomment if needed.
@@ -387,7 +388,7 @@ fn main() {
     };
 
     let mut alg: &[Alg] = &args.alg;
-    let mut buf = [0u8; 8*1024];
+    let mut buf = [0u8; 8 * 1024];
 
     // mode: fast-check mode (hash(file[0]) == expected)
     if let Some(exp_digest_str) = &expected {
@@ -400,14 +401,20 @@ fn main() {
         let got_digest = if alg.len() == 1 {
             hash(alg, &mut file, &mut buf, binary).unwrap_or_else(|e| {
                 if !args.status {
-                    eprintln!("{}failed to calculate digest {}: {}", ERR_PREFIX, filename, e);
+                    eprintln!(
+                        "{}failed to calculate digest {}: {}",
+                        ERR_PREFIX, filename, e
+                    );
                 }
                 exit(3);
             })
         } else {
             let alg = guess_alg(exp_digest_str).unwrap_or_else(|| {
                 if !args.status {
-                    eprintln!("{}could not guess algorithm, specify one with -a", ERR_PREFIX);
+                    eprintln!(
+                        "{}could not guess algorithm, specify one with -a",
+                        ERR_PREFIX
+                    );
                 }
                 exit(1);
             });
@@ -418,8 +425,10 @@ fn main() {
             algs[0] = alg;
             hash(&algs, &mut file, &mut buf, binary).unwrap_or_else(|e| {
                 if !args.status {
-                    eprintln!("{}failed to calculate digest {}: {}",
-                              ERR_PREFIX, filename, e);
+                    eprintln!(
+                        "{}failed to calculate digest {}: {}",
+                        ERR_PREFIX, filename, e
+                    );
                 }
                 exit(3);
             })
@@ -467,8 +476,10 @@ fn main() {
             if line.trim().is_empty() {
                 malformed += 1;
                 if args.warn {
-                    eprintln!("{}{}: {}: improperly formatted checksum line",
-                              ERR_PREFIX, filename, i);
+                    eprintln!(
+                        "{}{}: {}: improperly formatted checksum line",
+                        ERR_PREFIX, filename, i
+                    );
                 }
                 continue;
             }
@@ -485,8 +496,10 @@ fn main() {
                 let alg = match Alg::from_str(algpart, true) {
                     Ok(parsed) => parsed,
                     Err(e) => {
-                        eprintln!("{}{}: {}: improperly formatted checksum line: {}",
-                                  ERR_PREFIX, filename, i, e);
+                        eprintln!(
+                            "{}{}: {}: improperly formatted checksum line: {}",
+                            ERR_PREFIX, filename, i, e
+                        );
                         continue;
                     }
                 };
@@ -499,8 +512,10 @@ fn main() {
             } else if parts.len() != 2 {
                 malformed += 1;
                 if args.warn {
-                    eprintln!("{}{}: {}: improperly formatted checksum line",
-                              ERR_PREFIX, filename, i);
+                    eprintln!(
+                        "{}{}: {}: improperly formatted checksum line",
+                        ERR_PREFIX, filename, i
+                    );
                 }
                 continue;
             }
@@ -508,7 +523,10 @@ fn main() {
             if i == 0 && algs.is_empty() {
                 let alg = guess_alg(exp_digest_str).unwrap_or_else(|| {
                     if !args.status {
-                        eprintln!("{}could not guess algorithm, specify one with -a", ERR_PREFIX);
+                        eprintln!(
+                            "{}could not guess algorithm, specify one with -a",
+                            ERR_PREFIX
+                        );
                     }
                     exit(1);
                 });
@@ -517,17 +535,19 @@ fn main() {
                 }
                 algs.push(alg);
             }
-            let rest = line[digest_offset_bytes+exp_digest_str.len()..].trim_start();
+            let rest = line[digest_offset_bytes + exp_digest_str.len()..].trim_start();
             digest_buf.clear();
             let exp_digest = match decode_digest(exp_digest_str, &mut digest_buf) {
                 Err(_) => {
                     malformed += 1;
                     if args.warn {
-                        eprintln!("{}{}: {}: improperly formatted checksum line",
-                                  ERR_PREFIX, filename, i);
+                        eprintln!(
+                            "{}{}: {}: improperly formatted checksum line",
+                            ERR_PREFIX, filename, i
+                        );
                     }
                     continue;
-                },
+                }
                 Ok(_) => &digest_buf,
             };
             let (sep, fname) = rest.split_at(1);
@@ -558,14 +578,14 @@ fn main() {
                         println!("{}: FAILED open or read", fname);
                     }
                     continue;
-                },
+                }
             };
             let mut aa: [Alg; 1] = [Alg::Md5]; // dummy init value
             let alg: &[Alg] = match alg_override {
                 Some(a) => {
                     aa[0] = a;
                     &aa
-                },
+                }
                 None => &algs,
             };
             let got_digest = hash(alg, &mut f, &mut buf, bin).unwrap_or_else(|e| {
@@ -591,18 +611,30 @@ fn main() {
             }
         }
         if malformed > 0 {
-            eprintln!("{}WARNING: {} lines are improperly formatted", ERR_PREFIX, malformed);
+            eprintln!(
+                "{}WARNING: {} lines are improperly formatted",
+                ERR_PREFIX, malformed
+            );
         }
         if missing > 0 && (!args.ignore_missing || malformed > 0 || mismatched > 0) {
             // Warn about missing only when not ignoring missing OR when
             // any other warnings are issued anyway.
-            eprintln!("{}WARNING: {} listed files could not be read", ERR_PREFIX, missing);
+            eprintln!(
+                "{}WARNING: {} listed files could not be read",
+                ERR_PREFIX, missing
+            );
         }
         if mismatched > 0 {
-            eprintln!("{}WARNING: {} computed checksum did NOT match", ERR_PREFIX, mismatched);
+            eprintln!(
+                "{}WARNING: {} computed checksum did NOT match",
+                ERR_PREFIX, mismatched
+            );
         }
         if well_formed == 0 {
-            eprintln!("{}{}: no properly formatted checksum lines found", ERR_PREFIX, filename);
+            eprintln!(
+                "{}{}: no properly formatted checksum lines found",
+                ERR_PREFIX, filename
+            );
             exit(1);
         }
         if mismatched > 0 || (missing > 0 && !args.ignore_missing) {
@@ -620,11 +652,10 @@ fn main() {
     }
     for filename in files {
         let mut file = fopen_or_exit(&filename);
-        let ds = hash(alg, &mut file, &mut buf, binary)
-            .unwrap_or_else(|e| {
-                eprintln!("{}failed to calculate digest: {}", ERR_PREFIX, e);
-                exit(3);
-            });
+        let ds = hash(alg, &mut file, &mut buf, binary).unwrap_or_else(|e| {
+            eprintln!("{}failed to calculate digest: {}", ERR_PREFIX, e);
+            exit(3);
+        });
         for (i, a) in alg.iter().enumerate() {
             let d = &ds[i];
             let av = a.to_possible_value().unwrap();
