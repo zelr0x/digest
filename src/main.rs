@@ -382,7 +382,7 @@ fn main() {
             exit(1);
         }
         filepath = Some(p);
-        let f = fopen_or_exit(&filename);
+        let f = fopen_or_exit(filename);
         Box::new(f)
     };
 
