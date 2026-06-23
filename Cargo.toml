@@ -1,0 +1,28 @@
+[package]
+name = "digest"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.6.1", default-features = false, features = ["std", "help", "derive", "cargo"]}
+digest = "0.11"
+md-5 = "0.11"
+sha1 = "0.11"
+sha2 = "0.11"
+sha3 = "0.12"
+
+[profile.release]
+debug = 1
+
+[profile.release-lto]
+inherits = "release"
+opt-level = 3
+debug = "none"
+strip = "symbols"
+debug-assertions = false
+overflow-checks = false
+lto = "fat"
+panic = "abort"
+incremental = false
+codegen-units = 1
+
